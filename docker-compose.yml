@@ -1,8 +1,50 @@
 services:
-  php:
-    image: yiisoftware/yii2-php:8.2-fpm-23.2.0-nginx
-    volumes:
-      - ~/.composer-docker/cache:/root/.composer/cache:delegated
-      - ./:/app:delegated
+  nginx:
+    container_name: ${APP_NAME}_nginx
+    image: nginx:${NGINX_VERSION}
     ports:
-      - '8000:80'
+      - 80:80
+      - 443:443
+    volumes:
+      - ${DOCKER_DIR}/nginx/conf.d/nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - ${DOCKER_DIR}/nginx/ssl:/etc/nginx/ssl
+      - ${DOCKER_DIR}/log/nginx:/var/log/nginx
+      - ${WORK_DIR}
+    depends_on:
+      - php-fpm
+      - mariadb
+    networks:
+      default:
+        aliases:
+          - ${APP_HOST}
+  php-fpm:
+    container_name: ${APP_NAME}_php-fpm
+    build: ${DOCKER_DIR}/php-fpm
+    ports:
+      - 9000:9000
+    volumes:
+      - ${WORK_DIR}
+    depends_on:
+      - mariadb
+    networks:
+      - default
+  mariadb:
+    container_name: ${APP_NAME}_mariadb
+    image: mariadb:${MARIADB_VERSION}
+    ports:
+      - 3306:3306
+    volumes:
+      - ${DOCKER_DIR}/mysql/data/db/mysql:/var/lib/mysql
+      #- ${DOCKER_DIR}/mysql/conf.d/my.conf:/etc/mysql/conf.d/my.cnf
+      - ${WORK_DIR}
+    environment:
+      - MYSQL_DATABASE=${MARIADB_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - MYSQL_USER=${MARIADB_USER}
+      - MYSQL_PASSWORD=${MARIADB_PASSWORD}
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
