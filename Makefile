@@ -1,3 +1,5 @@
+include .env
+
 build:
 	@docker compose up -d --build
 
@@ -23,5 +25,5 @@ ps:
 logs:
 	@docker compose logs -f
 
-server:
-	@docker exec -it shorturl-php-1 /bin/bash
+app:
+	@docker exec -it ${APP_NAME}_php-fpm /bin/bash
